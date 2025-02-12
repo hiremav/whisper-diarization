@@ -477,6 +477,55 @@ def get_speaker_aware_transcript(sentences_speaker_mapping, f):
         f.write(sentence + " ")
 
 
+def parse_speaker(speaker_val):
+    """
+    If speaker_val is a string like "Speaker 0", extract the numeric part as an integer.
+    Otherwise, assume it's already an integer.
+    """
+    if isinstance(speaker_val, str):
+        if speaker_val.startswith("Speaker "):
+            try:
+                return int(speaker_val.split()[1])
+            except (IndexError, ValueError):
+                pass
+    return speaker_val
+
+
+def get_speaker_aware_transcript_json(sentences_speaker_mapping, f):
+    if not sentences_speaker_mapping:
+        return
+
+    items = []
+    # Process first sentence, converting speaker to integer if needed
+    first = sentences_speaker_mapping[0]
+    current_speaker = parse_speaker(first["speaker"])
+    current_content = first["text"].strip() + " "
+
+    for sentence_dict in sentences_speaker_mapping[1:]:
+        # Convert speaker value
+        speaker = parse_speaker(sentence_dict["speaker"])
+        text = sentence_dict["text"].strip() + " "
+
+        if speaker == current_speaker:
+            current_content += text
+        else:
+            items.append({
+                "speaker": current_speaker,
+                "content": current_content.strip()
+            })
+            current_speaker = speaker
+            current_content = text
+
+    # Append the last block
+    items.append({
+        "speaker": current_speaker,
+        "content": current_content.strip()
+    })
+
+    result = {"items": items}
+    json.dump(result, f, indent=2)
+
+
 def format_timestamp(
     milliseconds: float, always_include_hours: bool = False, decimal_marker: str = "."
 ):
