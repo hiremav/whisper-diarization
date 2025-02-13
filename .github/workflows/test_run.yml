@@ -1,6 +1,6 @@
 name: Test Run
 
-on: [push]
+on: [push] # This workflow will run on every push to the repository
 
 jobs:
   build:
